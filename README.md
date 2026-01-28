@@ -71,3 +71,7 @@ export default defineConfig([
   },
 ])
 ```
+
+```
+npm run dev
+```

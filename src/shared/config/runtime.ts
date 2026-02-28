@@ -5,7 +5,7 @@ export function getApiBaseUrl(): string {
   if (saved) return trimTrailingSlash(saved);
 
   const envDefault = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  return trimTrailingSlash(envDefault || "http://127.0.0.1:8080");
+  return trimTrailingSlash(envDefault || "http://localhost:8080");
 }
 
 export function setApiBaseUrl(url: string) {

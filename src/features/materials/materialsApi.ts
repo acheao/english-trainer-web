@@ -8,9 +8,9 @@ export interface ImportMaterialsRequest {
 }
 
 export interface ImportMaterialsResponse {
-    successCount: number;
-    failCount: number;
-    fails?: { line: string; reason: string }[];
+    totalProvided: number;
+    successfullyImported: number;
+    skippedDuplicates: number;
 }
 
 export interface GetMaterialsParams {

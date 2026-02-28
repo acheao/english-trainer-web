@@ -29,7 +29,7 @@ export default function MaterialImportDialog({ open, onClose, onSuccess }: Mater
     const [content, setContent] = useState("");
     const [type, setType] = useState<"auto" | "sentence" | "phrase" | "word">("auto");
     const [tagsInput, setTagsInput] = useState("");
-    const [result, setResult] = useState<{ success: number; fails: number; failRows: any[] } | null>(null);
+    const [result, setResult] = useState<{ success: number; skipped: number } | null>(null);
 
     const handleImport = async () => {
         const lines = content.split("\n").map(l => l.trim()).filter(l => l);
@@ -44,11 +44,23 @@ export default function MaterialImportDialog({ open, onClose, onSuccess }: Mater
             const tags = tagsInput.split(",").map(t => t.trim()).filter(t => t);
             const res = await materialsApi.import({ type, lines, tags: tags.length ? tags : undefined });
 
-            if (res.failCount > 0) {
-                setResult({ success: res.successCount, fails: res.failCount, failRows: res.fails || [] });
-                showSnackbar(`Imported with some errors: ${res.successCount} success, ${res.failCount} failed.`, "warning");
+            const skipCount = res.skippedDuplicates ?? 0;
+            const successCount = res.successfullyImported ?? 0;
+
+            if (skipCount > 0) {
+                setResult({ success: successCount, skipped: skipCount });
+
+                if (successCount === 0) {
+                    showSnackbar(skipCount === 1 ? "The content already exists." : "All imported content already exists.", "warning");
+                } else {
+                    showSnackbar(`Imported ${successCount} items; skipped ${skipCount} duplicates.`, "warning");
+                }
+
+                if (successCount > 0) {
+                    onSuccess();
+                }
             } else {
-                showSnackbar(`Successfully imported ${res.successCount} materials.`, "success");
+                showSnackbar(`Successfully imported ${successCount} materials.`, "success");
                 onSuccess();
                 onClose();
                 setContent("");
@@ -100,21 +112,14 @@ export default function MaterialImportDialog({ open, onClose, onSuccess }: Mater
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         placeholder={"First line\nSecond line\n..."}
+                        helperText="Note: Duplicate materials are no longer allowed and will be skipped."
                     />
 
-                    {result && result.fails > 0 && (
-                        <Box bgcolor="error.light" p={2} borderRadius={1}>
-                            <Typography color="error.contrastText" variant="subtitle2">
-                                Failed to import {result.fails} items:
+                    {result && result.skipped > 0 && (
+                        <Box bgcolor="warning.light" p={2} borderRadius={1}>
+                            <Typography color="warning.contrastText" variant="subtitle2">
+                                Skipped {result.skipped} duplicate item{result.skipped !== 1 ? 's' : ''}.
                             </Typography>
-                            <ul style={{ margin: 0, paddingLeft: 20 }}>
-                                {result.failRows.slice(0, 5).map((f, i) => (
-                                    <li key={i}>
-                                        <Typography color="error.contrastText" variant="body2">{f.line}: {f.reason}</Typography>
-                                    </li>
-                                ))}
-                                {result.failRows.length > 5 && <li>...and more</li>}
-                            </ul>
                         </Box>
                     )}
                 </Box>

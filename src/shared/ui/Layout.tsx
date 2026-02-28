@@ -19,11 +19,15 @@ import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import SettingsIcon from "@mui/icons-material/Settings";
+import LogoutIcon from "@mui/icons-material/Logout";
+import HomeIcon from "@mui/icons-material/Home";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../features/auth/AuthContext";
 
 const drawerWidth = 240;
 
 const NAV_ITEMS = [
+  { text: "Home", path: "/", icon: <HomeIcon />, exact: true },
   { text: "Practice", path: "/practice", icon: <EditNoteIcon /> },
   { text: "Materials", path: "/materials", icon: <AutoStoriesIcon /> },
   { text: "Statistics", path: "/stats", icon: <QueryStatsIcon /> },
@@ -36,6 +40,7 @@ export default function Layout() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const handleDrawerClose = () => {
     setIsClosing(true);
@@ -60,34 +65,49 @@ export default function Layout() {
         </Typography>
       </Toolbar>
       <Divider />
-      <List>
-        {NAV_ITEMS.map((item) => {
-          const active = location.pathname.startsWith(item.path);
-          return (
-            <ListItem key={item.text} disablePadding>
-              <ListItemButton
-                selected={active}
-                onClick={() => navigate(item.path)}
-                sx={{
-                  "&.Mui-selected": {
-                    bgcolor: "action.selected",
-                    borderRight: "4px solid",
-                    borderColor: "primary.main",
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: active ? "primary.main" : "inherit" }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  slotProps={{ primary: { fontWeight: active ? "bold" : "regular" } }}
-                />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
-      </List>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 65px)' }}>
+        <List sx={{ flexGrow: 1 }}>
+          {NAV_ITEMS.map((item) => {
+            const active = item.exact
+              ? location.pathname === item.path
+              : location.pathname.startsWith(item.path);
+            return (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton
+                  selected={active}
+                  onClick={() => navigate(item.path)}
+                  sx={{
+                    "&.Mui-selected": {
+                      bgcolor: "action.selected",
+                      borderRight: "4px solid",
+                      borderColor: "primary.main",
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: active ? "primary.main" : "inherit" }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    slotProps={{ primary: { fontWeight: active ? "bold" : "regular" } }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+        <Divider />
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => logout()}>
+              <ListItemIcon>
+                <LogoutIcon color="error" />
+              </ListItemIcon>
+              <ListItemText primary="Logout" slotProps={{ primary: { color: "error.main" } }} />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
     </div>
   );
 

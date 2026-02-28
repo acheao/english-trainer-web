@@ -1,19 +1,4 @@
 import { useState, useEffect } from "react";
-import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    Grid,
-    List,
-    ListItem,
-    ListItemText,
-    Paper,
-    Divider,
-    CircularProgress,
-    ToggleButtonGroup,
-    ToggleButton
-} from "@mui/material";
 import { statsApi } from "./statsApi";
 import type { StatsOverview, ErrorTypeStat } from "./statsApi";
 import { useSnackbar } from "../../shared/ui/SnackbarProvider";
@@ -59,111 +44,107 @@ export default function StatsPage() {
     }, [range, showSnackbar]);
 
     return (
-        <Box>
-            <Typography variant="h4" gutterBottom>
-                Statistics
-            </Typography>
+        <div className="max-w-5xl mx-auto py-8">
+            <div className="mb-8 border-b border-gray-200 pb-4">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Statistics</h1>
+                <p className="text-gray-500">Track your progress and analyze common errors.</p>
+            </div>
 
             {/* Overview Cards */}
-            <Grid container spacing={3} mb={4}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="text.secondary" gutterBottom>
-                                Today's Output
-                            </Typography>
-                            {loadingOverview ? <CircularProgress size={24} /> : (
-                                <Typography variant="h3">{overview?.todayDone || 0}</Typography>
-                            )}
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="text.secondary" gutterBottom>
-                                Today Avg Score
-                            </Typography>
-                            {loadingOverview ? <CircularProgress size={24} /> : (
-                                <Typography variant="h3" color="primary.main">{overview?.todayAvgScore || 0}</Typography>
-                            )}
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="text.secondary" gutterBottom>
-                                Today Accuracy
-                            </Typography>
-                            {loadingOverview ? <CircularProgress size={24} /> : (
-                                <Typography variant="h3" color="success.main">
-                                    {overview?.todayAccuracy ? `${Math.round(overview.todayAccuracy * 100)}%` : "0%"}
-                                </Typography>
-                            )}
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="text.secondary" gutterBottom>
-                                Due for Review
-                            </Typography>
-                            {loadingOverview ? <CircularProgress size={24} /> : (
-                                <Typography variant="h3" color="warning.main">{overview?.dueCount || 0}</Typography>
-                            )}
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Today's Output</h3>
+                    {loadingOverview ? (
+                        <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
+                    ) : (
+                        <p className="text-3xl font-bold text-gray-900">{overview?.todayDone || 0}</p>
+                    )}
+                </div>
 
-            {/* Error Types Top List */}
-            <Paper sx={{ p: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6">Top Error Types</Typography>
-                    <ToggleButtonGroup
-                        value={range}
-                        exclusive
-                        onChange={(e, newRange) => newRange && setRange(newRange)}
-                        size="small"
-                    >
-                        <ToggleButton value="7d">Last 7 Days</ToggleButton>
-                        <ToggleButton value="30d">Last 30 Days</ToggleButton>
-                    </ToggleButtonGroup>
-                </Box>
-                <Divider sx={{ mb: 2 }} />
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Today Avg Score</h3>
+                    {loadingOverview ? (
+                        <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
+                    ) : (
+                        <p className="text-3xl font-bold text-blue-600">{overview?.todayAvgScore || 0}</p>
+                    )}
+                </div>
 
-                {loadingErrors ? (
-                    <Box display="flex" justifyContent="center" p={4}>
-                        <CircularProgress />
-                    </Box>
-                ) : errorTypes.length === 0 ? (
-                    <Typography color="text.secondary" align="center" py={4}>
-                        No error data available for this period. Great job!
-                    </Typography>
-                ) : (
-                    <List>
-                        {errorTypes.map((err, index) => (
-                            <ListItem key={err.errorType} divider={index < errorTypes.length - 1}>
-                                <ListItemText
-                                    primary={
-                                        <Box display="flex" justifyContent="space-between">
-                                            <Typography variant="subtitle1" fontWeight={500}>
-                                                {index + 1}. {err.errorType}
-                                            </Typography>
-                                            <Typography variant="body1" color="error.main" fontWeight={500}>
-                                                {err.count} times
-                                            </Typography>
-                                        </Box>
-                                    }
-                                    secondary={`Last seen: ${new Date(err.lastSeenAt).toLocaleString()}`}
-                                />
-                            </ListItem>
-                        ))}
-                    </List>
-                )}
-            </Paper>
-        </Box>
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Today Accuracy</h3>
+                    {loadingOverview ? (
+                        <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
+                    ) : (
+                        <p className="text-3xl font-bold text-green-600">
+                            {overview?.todayAccuracy ? `${Math.round(overview.todayAccuracy * 100)}%` : "0%"}
+                        </p>
+                    )}
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Due for Review</h3>
+                    {loadingOverview ? (
+                        <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
+                    ) : (
+                        <p className="text-3xl font-bold text-orange-500">{overview?.dueCount || 0}</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Error Types List */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Top Error Types</h2>
+
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setRange("7d")}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${range === "7d" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                                }`}
+                        >
+                            Last 7 Days
+                        </button>
+                        <button
+                            onClick={() => setRange("30d")}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${range === "30d" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                                }`}
+                        >
+                            Last 30 Days
+                        </button>
+                    </div>
+                </div>
+
+                <div className="p-0">
+                    {loadingErrors ? (
+                        <div className="flex justify-center p-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                    ) : errorTypes.length === 0 ? (
+                        <div className="text-center py-16 px-6">
+                            <p className="text-gray-500">No error data available for this period. Great job!</p>
+                        </div>
+                    ) : (
+                        <ul className="divide-y divide-gray-200">
+                            {errorTypes.map((err, index) => (
+                                <li key={err.errorType} className="px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900 mb-1">
+                                            {index + 1}. {err.errorType}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            Last seen: {new Date(err.lastSeenAt).toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="bg-red-50 text-red-700 font-medium px-3 py-1 rounded-full text-sm flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                                        {err.count} times
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }

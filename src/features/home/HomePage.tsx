@@ -1,113 +1,87 @@
-import { Box, Typography, Grid, Card, CardActionArea, CardContent, useTheme, alpha } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import AutoStoriesIcon from "@mui/icons-material/AutoStories";
-import QueryStatsIcon from "@mui/icons-material/QueryStats";
-import SettingsIcon from "@mui/icons-material/Settings";
+import { AutoStories as AutoStoriesIcon, EditNote as EditNoteIcon, QueryStats as QueryStatsIcon, Settings as SettingsIcon } from "@mui/icons-material";
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface AppCardProps {
   title: string;
   description: string;
   icon: ReactNode;
   path: string;
-  color: string;
+  iconColorClass: string;
+  iconBgClass: string;
 }
 
 export default function HomePage() {
-  const theme = useTheme();
   const navigate = useNavigate();
 
   const apps: AppCardProps[] = [
     {
       title: "Practice",
       description: "Start a new training session",
-      icon: <EditNoteIcon sx={{ fontSize: 60 }} />,
+      icon: <EditNoteIcon fontSize="large" />,
       path: "/practice",
-      color: theme.palette.primary.main,
+      iconColorClass: "text-blue-600",
+      iconBgClass: "bg-blue-50",
     },
     {
       title: "Materials",
       description: "Manage your vocabulary and sentences",
-      icon: <AutoStoriesIcon sx={{ fontSize: 60 }} />,
+      icon: <AutoStoriesIcon fontSize="large" />,
       path: "/materials",
-      color: theme.palette.secondary.main,
+      iconColorClass: "text-purple-600",
+      iconBgClass: "bg-purple-50",
     },
     {
       title: "Statistics",
       description: "View your progress and error analysis",
-      icon: <QueryStatsIcon sx={{ fontSize: 60 }} />,
+      icon: <QueryStatsIcon fontSize="large" />,
       path: "/stats",
-      color: theme.palette.success.main,
+      iconColorClass: "text-green-600",
+      iconBgClass: "bg-green-50",
     },
     {
       title: "Settings",
       description: "Configure LLM and application preferences",
-      icon: <SettingsIcon sx={{ fontSize: 60 }} />,
+      icon: <SettingsIcon fontSize="large" />,
       path: "/settings",
-      color: theme.palette.warning.main,
+      iconColorClass: "text-orange-500",
+      iconBgClass: "bg-orange-50",
     },
   ];
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto", py: 4 }}>
-      <Box mb={6}>
-        <Typography variant="h3" fontWeight="bold" gutterBottom>
-          Welcome to English Trainer
-        </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 800 }}>
-          Your personal workspace for mastering English. Select an app below to get started.
-        </Typography>
-      </Box>
+    <div className="max-w-5xl mx-auto py-8">
+      {/* Header Section */}
+      <div className="mb-12">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">English Trainer</h1>
+        <p className="text-gray-500 text-lg">Your personal workspace for mastering English.</p>
+      </div>
 
-      <Grid container spacing={4} alignItems="stretch">
-        {apps.map((app) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={app.title} sx={{ display: "flex" }}>
-            <Card
-              elevation={2}
-              sx={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                borderRadius: 4,
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                border: "1px solid",
-                borderColor: alpha(app.color, 0.1),
-                "&:hover": {
-                  transform: "translateY(-8px)",
-                  boxShadow: `0 12px 24px -4px ${alpha(app.color, 0.3)}`,
-                  borderColor: alpha(app.color, 0.5),
-                },
-              }}
+      {/* Today Section */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Today</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {apps.map((app) => (
+            <button
+              key={app.title}
+              onClick={() => navigate(app.path)}
+              className="group flex flex-col text-left bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200"
             >
-              <CardActionArea
-                onClick={() => navigate(app.path)}
-                sx={{ flexGrow: 1, p: 2, display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start" }}
-              >
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    bgcolor: alpha(app.color, 0.1),
-                    color: app.color,
-                    mb: 3,
-                  }}
-                >
-                  {app.icon}
-                </Box>
-                <CardContent sx={{ p: 0, flexGrow: 1 }}>
-                  <Typography variant="h5" fontWeight="bold" gutterBottom>
-                    {app.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                    {app.description}
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+              <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${app.iconBgClass} ${app.iconColorClass}`}>
+                {app.icon}
+              </div>
+
+              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                {app.title}
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                {app.description}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

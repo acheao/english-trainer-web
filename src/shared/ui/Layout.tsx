@@ -1,179 +1,100 @@
-import { useState } from "react";
 import {
-  AppBar,
-  Box,
-  CssBaseline,
-  Divider,
-  Drawer,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Typography,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import AutoStoriesIcon from "@mui/icons-material/AutoStories";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import QueryStatsIcon from "@mui/icons-material/QueryStats";
-import SettingsIcon from "@mui/icons-material/Settings";
-import LogoutIcon from "@mui/icons-material/Logout";
-import HomeIcon from "@mui/icons-material/Home";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+  AutoStories as AutoStoriesIcon,
+  EditNote as EditNoteIcon,
+  Home as HomeIcon,
+  Logout as LogoutIcon,
+  QueryStats as QueryStatsIcon,
+  Settings as SettingsIcon,
+} from "@mui/icons-material";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/AuthContext";
 
-const drawerWidth = 240;
-
 const NAV_ITEMS = [
-  { text: "Home", path: "/", icon: <HomeIcon />, exact: true },
-  { text: "Practice", path: "/practice", icon: <EditNoteIcon /> },
-  { text: "Materials", path: "/materials", icon: <AutoStoriesIcon /> },
-  { text: "Statistics", path: "/stats", icon: <QueryStatsIcon /> },
-  { text: "Settings", path: "/settings", icon: <SettingsIcon /> },
+  { text: "Home", path: "/", icon: <HomeIcon fontSize="small" />, exact: true },
+  { text: "Practice", path: "/practice", icon: <EditNoteIcon fontSize="small" /> },
+  { text: "Materials", path: "/materials", icon: <AutoStoriesIcon fontSize="small" /> },
+  { text: "Statistics", path: "/stats", icon: <QueryStatsIcon fontSize="small" /> },
 ];
 
 export default function Layout() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
 
-  const handleDrawerClose = () => {
-    setIsClosing(true);
-    setMobileOpen(false);
-  };
+  return (
+    <div className="flex min-h-screen bg-[#f7f7f8] font-sans text-gray-900">
+      {/* Sidebar */}
+      <aside className="w-64 flex-shrink-0 flex flex-col pt-8 pb-6 border-r border-gray-200 bg-[#f7f7f8]">
+        {/* Logo / Header */}
+        <div className="px-6 mb-8 flex items-center gap-2 text-gray-400">
+          {/* Simple mock window controls */}
+          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+        </div>
 
-  const handleDrawerTransitionEnd = () => {
-    setIsClosing(false);
-  };
+        <div className="px-6 mb-6">
+          <h1 className="text-xl font-bold tracking-tight">English Trainer</h1>
+        </div>
 
-  const handleDrawerToggle = () => {
-    if (!isClosing) {
-      setMobileOpen(!mobileOpen);
-    }
-  };
-
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          English Trainer
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 65px)' }}>
-        <List sx={{ flexGrow: 1 }}>
+        {/* Main Navigation */}
+        <nav className="flex-1 px-4 space-y-1">
           {NAV_ITEMS.map((item) => {
             const active = item.exact
               ? location.pathname === item.path
               : location.pathname.startsWith(item.path);
+
             return (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  selected={active}
-                  onClick={() => navigate(item.path)}
-                  sx={{
-                    "&.Mui-selected": {
-                      bgcolor: "action.selected",
-                      borderRight: "4px solid",
-                      borderColor: "primary.main",
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ color: active ? "primary.main" : "inherit" }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    slotProps={{ primary: { fontWeight: active ? "bold" : "regular" } }}
-                  />
-                </ListItemButton>
-              </ListItem>
+              <button
+                key={item.text}
+                onClick={() => navigate(item.path)}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${active
+                    ? "bg-gray-200 text-gray-900"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+              >
+                <span className={`${active ? "text-gray-800" : "text-gray-500"}`}>
+                  {item.icon}
+                </span>
+                {item.text}
+              </button>
             );
           })}
-        </List>
-        <Divider />
-        <List>
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => logout()}>
-              <ListItemIcon>
-                <LogoutIcon color="error" />
-              </ListItemIcon>
-              <ListItemText primary="Logout" slotProps={{ primary: { color: "error.main" } }} />
-            </ListItemButton>
-          </ListItem>
-        </List>
-      </Box>
-    </div>
-  );
+        </nav>
 
-  return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: "none" } }}
+        {/* Bottom Navigation */}
+        <div className="px-4 mt-auto pt-6 border-t border-gray-200 border-dashed space-y-1">
+          <button
+            onClick={() => navigate("/settings")}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${location.pathname.startsWith("/settings")
+                ? "bg-gray-200 text-gray-900"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
           >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            {NAV_ITEMS.find((n) => location.pathname.startsWith(n.path))?.text || "English Trainer"}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="mailbox folders"
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onTransitionEnd={handleDrawerTransitionEnd}
-          onClose={handleDrawerClose}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
-          sx={{
-            display: { xs: "block", sm: "none" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: "none", sm: "block" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
-      >
-        <Toolbar />
-        <Outlet />
-      </Box>
-    </Box>
+            <span className="text-gray-500">
+              <SettingsIcon fontSize="small" />
+            </span>
+            Settings
+          </button>
+
+          <button
+            onClick={() => logout()}
+            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors text-red-600 hover:bg-red-50"
+          >
+            <span className="text-red-500">
+              <LogoutIcon fontSize="small" />
+            </span>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 bg-white ml-2 my-2 mr-2 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="h-full overflow-y-auto p-10">
+          <Outlet />
+        </div>
+      </main>
+    </div>
   );
 }

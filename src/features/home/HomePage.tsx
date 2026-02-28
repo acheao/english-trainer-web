@@ -60,13 +60,15 @@ export default function HomePage() {
         </Typography>
       </Box>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={4} alignItems="stretch">
         {apps.map((app) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={app.title}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={app.title} sx={{ display: "flex" }}>
             <Card
               elevation={2}
               sx={{
-                height: "100%",
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
                 borderRadius: 4,
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 border: "1px solid",
@@ -80,7 +82,7 @@ export default function HomePage() {
             >
               <CardActionArea
                 onClick={() => navigate(app.path)}
-                sx={{ height: "100%", p: 2, display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start" }}
+                sx={{ flexGrow: 1, p: 2, display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start" }}
               >
                 <Box
                   sx={{

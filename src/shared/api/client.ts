@@ -15,6 +15,11 @@ export async function apiFetch<T = JsonValue>(
     ...(options.headers as Record<string, string> | undefined)
   };
 
+  const token = localStorage.getItem("token");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   let body = options.body;
 
   if (options.json !== undefined) {

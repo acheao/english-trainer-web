@@ -15,6 +15,7 @@ import {
 import { Visibility, VisibilityOff, Login as LoginIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { apiFetch } from "../../shared/api/client";
 
 export default function LoginPage() {
     const theme = useTheme();
@@ -23,20 +24,40 @@ export default function LoginPage() {
 
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    // For MVP, accepts any input
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
 
-        // Mock API delay
-        setTimeout(() => {
-            login();
-            navigate("/", { replace: true });
-        }, 800);
+        try {
+            const res = await apiFetch<any>("/api/auth/login", {
+                method: "POST",
+                json: { username, password }
+            });
+
+            // Handle standard wrapper { code: 0, data: "token" } or { token: "..." }
+            let token = null;
+            if (typeof res === 'string') token = res;
+            else if (res?.token) token = res.token;
+            else if (res?.data?.token) token = res.data.token;
+            else if (typeof res?.data === 'string') token = res.data;
+
+            if (token && typeof token === 'string') {
+                login(token);
+                navigate("/", { replace: true });
+            } else {
+                throw new Error("Invalid credentials or unexpected response format");
+            }
+        } catch (err: any) {
+            setError(err?.message || "Login failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -69,6 +90,12 @@ export default function LoginPage() {
                             Sign in to continue your English training journey
                         </Typography>
                     </Box>
+
+                    {error && (
+                        <Typography color="error.main" variant="body2" textAlign="center" mb={2} fontWeight="medium">
+                            {error}
+                        </Typography>
+                    )}
 
                     <form onSubmit={handleLogin}>
                         <Box display="flex" flexDirection="column" gap={3}>

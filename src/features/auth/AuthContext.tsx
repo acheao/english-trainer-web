@@ -3,18 +3,26 @@ import type { ReactNode } from "react";
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    login: () => void;
+    login: (token: string) => void;
     logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    // For MVP, we default to false. A real app would check a token here.
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+        !!localStorage.getItem("token")
+    );
 
-    const login = () => setIsAuthenticated(true);
-    const logout = () => setIsAuthenticated(false);
+    const login = (token: string) => {
+        localStorage.setItem("token", token);
+        setIsAuthenticated(true);
+    };
+
+    const logout = () => {
+        localStorage.removeItem("token");
+        setIsAuthenticated(false);
+    };
 
     return (
         <AuthContext.Provider value={{ isAuthenticated, login, logout }}>

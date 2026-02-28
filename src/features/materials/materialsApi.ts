@@ -33,15 +33,32 @@ export const materialsApi = {
             json: data,
         }),
 
-    getList: (params: GetMaterialsParams) => {
-        const searchParams = new URLSearchParams();
-        if (params.query) searchParams.append("query", params.query);
-        if (params.type) searchParams.append("type", params.type);
-        if (params.enabled !== undefined) searchParams.append("enabled", String(params.enabled));
-        if (params.page !== undefined) searchParams.append("page", String(params.page));
-        if (params.size !== undefined) searchParams.append("size", String(params.size));
+    getList: async (params: GetMaterialsParams): Promise<GetMaterialsResponse> => {
+        const res = await apiFetch<MaterialDTO[]>(`api/materials`);
+        let filtered = res;
 
-        return apiFetch<GetMaterialsResponse>(`api/materials?${searchParams.toString()}`);
+        if (params.query) {
+            const q = params.query.toLowerCase();
+            filtered = filtered.filter(m =>
+                m.content.toLowerCase().includes(q) ||
+                (m.tags && m.tags.some(t => t.toLowerCase().includes(q)))
+            );
+        }
+        if (params.type) {
+            filtered = filtered.filter(m => m.type === params.type);
+        }
+        if (params.enabled !== undefined) {
+            filtered = filtered.filter(m => m.enabled === params.enabled);
+        }
+
+        const total = filtered.length;
+        const page = params.page || 1;
+        const size = params.size || 10;
+
+        // 1-indexed to 0-indexed slicing
+        const items = filtered.slice((page - 1) * size, page * size);
+
+        return { items, total };
     },
 
     update: (id: string, data: Partial<Pick<MaterialDTO, "enabled" | "type" | "tags" | "content">>) =>

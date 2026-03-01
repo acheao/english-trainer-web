@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./shared/ui/Layout";
 import MaterialsPage from "./features/materials/MaterialsPage";
 import PracticePage from "./features/practice/PracticePage";
@@ -28,6 +28,8 @@ export default function App() {
                 <Route path="/ping" element={<PingPage />} />
               </Route>
             </Route>
+            {/* Catch-all redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </SnackbarProvider>

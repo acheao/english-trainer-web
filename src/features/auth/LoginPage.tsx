@@ -16,11 +16,18 @@ import { Visibility, VisibilityOff, Login as LoginIcon } from "@mui/icons-materi
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { apiFetch } from "../../shared/api/client";
+import { useEffect } from "react";
 
 export default function LoginPage() {
     const theme = useTheme();
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/", { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +35,8 @@ export default function LoginPage() {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+
+
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -149,11 +158,17 @@ export default function LoginPage() {
                                     borderRadius: 2,
                                     fontWeight: "bold",
                                     textTransform: "none",
-                                    fontSize: "1.1rem"
+                                    fontSize: "1.1rem",
+                                    boxShadow: 'none',
+                                    '&:hover': {
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                    }
                                 }}
                             >
                                 {loading ? <CircularProgress size={26} color="inherit" /> : "Sign In"}
                             </Button>
+
+
                         </Box>
                     </form>
                 </CardContent>

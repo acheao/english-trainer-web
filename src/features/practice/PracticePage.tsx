@@ -7,18 +7,37 @@ import BatchSummaryDialog from "./BatchSummaryDialog";
 import { useSnackbar } from "../../shared/ui/SnackbarProvider";
 import { practiceApi } from "./practiceApi";
 import type { QuestionDTO, GradingDTO } from "../../types";
+import type { StartSessionRequest } from "./practiceApi";
+
+const DEFAULT_SESSION_CONFIG: StartSessionRequest = {
+    batchSize: 10,
+    generatorMode: "smart",
+};
+
+function buildStreamingGrading(explanationZh: string): GradingDTO {
+    return {
+        score: 0,
+        isCorrect: false,
+        correctedAnswer: "",
+        errorTypes: [],
+        explanationZh,
+        suggestions: [],
+    };
+}
 
 export default function PracticePage() {
     const { showSnackbar } = useSnackbar();
 
     // State Machine
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionConfig, setSessionConfig] = useState<StartSessionRequest>(DEFAULT_SESSION_CONFIG);
     const [questions, setQuestions] = useState<QuestionDTO[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Grading State
     const [loadingGrade, setLoadingGrade] = useState(false);
     const [currentGrading, setCurrentGrading] = useState<GradingDTO | null>(null);
+    const [currentUserAnswer, setCurrentUserAnswer] = useState<string | null>(null);
     const [batchResults, setBatchResults] = useState<GradingDTO[]>([]);
 
     // Dialog State
@@ -26,23 +45,50 @@ export default function PracticePage() {
 
     const currentQuestion = questions[currentIndex];
 
-    const handleSessionStarted = (sid: string, qs: QuestionDTO[]) => {
+    const handleSessionStarted = (sid: string, qs: QuestionDTO[], config: StartSessionRequest) => {
         setSessionId(sid);
+        setSessionConfig(config);
         setQuestions(qs);
         setCurrentIndex(0);
         setBatchResults([]);
         setCurrentGrading(null);
+        setCurrentUserAnswer(null);
         setShowSummary(false);
     };
 
     const handleSubmitAnswer = async (answer: string) => {
+        if (!currentQuestion) return;
+
+        setCurrentUserAnswer(answer);
         setLoadingGrade(true);
-        setCurrentGrading(null);
+        setCurrentGrading(buildStreamingGrading(""));
+
+        let streamedExplanation = "";
         try {
-            const res = await practiceApi.submitAnswer({ questionId: currentQuestion.id, userAnswer: answer });
-            setCurrentGrading(res);
-            setBatchResults(prev => [...prev, res]);
+            const res = await practiceApi.submitAnswerStream(
+                { questionId: currentQuestion.id, userAnswer: answer },
+                {
+                    onTextChunk: (chunk) => {
+                        streamedExplanation += chunk;
+                        setCurrentGrading((prev) => ({
+                            ...(prev ?? buildStreamingGrading("")),
+                            explanationZh: streamedExplanation,
+                        }));
+                    },
+                }
+            );
+
+            const finalGrading = res.explanationZh
+                ? res
+                : {
+                    ...res,
+                    explanationZh: streamedExplanation || res.explanationZh,
+                };
+
+            setCurrentGrading(finalGrading);
+            setBatchResults((prev) => [...prev, finalGrading]);
         } catch (err: any) {
+            setCurrentGrading(null);
             showSnackbar(err.message || "Failed to submit answer", "error");
         } finally {
             setLoadingGrade(false);
@@ -53,6 +99,7 @@ export default function PracticePage() {
         if (currentIndex < questions.length - 1) {
             setCurrentIndex(currentIndex + 1);
             setCurrentGrading(null);
+            setCurrentUserAnswer(null);
         } else {
             setShowSummary(true);
         }
@@ -63,15 +110,18 @@ export default function PracticePage() {
         setCurrentIndex(0);
         setBatchResults([]);
         setCurrentGrading(null);
+        setCurrentUserAnswer(null);
         setShowSummary(false);
     };
 
     const handleFinishSession = () => {
         setSessionId(null);
+        setSessionConfig(DEFAULT_SESSION_CONFIG);
         setQuestions([]);
         setCurrentIndex(0);
         setBatchResults([]);
         setCurrentGrading(null);
+        setCurrentUserAnswer(null);
         setShowSummary(false);
     };
 
@@ -130,29 +180,36 @@ export default function PracticePage() {
 
                 {currentGrading && (
                     <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                        <GradingPanel grading={currentGrading} />
-                        <div className="flex justify-end mt-8">
-                            <button
-                                onClick={handleNextQuestion}
-                                className="inline-flex items-center justify-center rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 transition-all transform active:scale-95"
-                            >
-                                {currentIndex < questions.length - 1 ? (
-                                    <>
-                                        Next Question
-                                        <svg className="ml-2 -mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
-                                        </svg>
-                                    </>
-                                ) : (
-                                    <>
-                                        Show Summary
-                                        <svg className="ml-2 -mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z" clipRule="evenodd" />
-                                        </svg>
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        <GradingPanel
+                            grading={currentGrading}
+                            streaming={loadingGrade}
+                            scoreTotal={questions.length}
+                            userAnswer={currentUserAnswer ?? undefined}
+                        />
+                        {!loadingGrade && (
+                            <div className="flex justify-end mt-8">
+                                <button
+                                    onClick={handleNextQuestion}
+                                    className="inline-flex items-center justify-center rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 transition-all transform active:scale-95"
+                                >
+                                    {currentIndex < questions.length - 1 ? (
+                                        <>
+                                            Next Question
+                                            <svg className="ml-2 -mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
+                                            </svg>
+                                        </>
+                                    ) : (
+                                        <>
+                                            Show Summary
+                                            <svg className="ml-2 -mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z" clipRule="evenodd" />
+                                            </svg>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -161,6 +218,8 @@ export default function PracticePage() {
                 open={showSummary}
                 sessionId={sessionId}
                 results={batchResults}
+                batchSize={sessionConfig.batchSize}
+                generatorMode={sessionConfig.generatorMode}
                 onNextBatch={handleNextBatch}
                 onFinish={handleFinishSession}
             />

@@ -2,16 +2,27 @@ import { useSnackbar } from "../../shared/ui/SnackbarProvider";
 import { practiceApi } from "./practiceApi";
 import type { QuestionDTO, GradingDTO } from "../../types";
 import { useState } from "react";
+import type { GeneratorMode } from "./practiceApi";
 
 interface BatchSummaryDialogProps {
     open: boolean;
     sessionId: string;
     results: GradingDTO[];
+    batchSize: number;
+    generatorMode: GeneratorMode;
     onNextBatch: (questions: QuestionDTO[]) => void;
     onFinish: () => void;
 }
 
-export default function BatchSummaryDialog({ open, sessionId, results, onNextBatch, onFinish }: BatchSummaryDialogProps) {
+export default function BatchSummaryDialog({
+    open,
+    sessionId,
+    results,
+    batchSize,
+    generatorMode,
+    onNextBatch,
+    onFinish,
+}: BatchSummaryDialogProps) {
     const { showSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
 
@@ -32,7 +43,7 @@ export default function BatchSummaryDialog({ open, sessionId, results, onNextBat
     const handleNextBatch = async () => {
         setLoading(true);
         try {
-            const res = await practiceApi.nextBatch(sessionId);
+            const res = await practiceApi.nextBatch(sessionId, { batchSize, generatorMode });
             if (res.questions && res.questions.length > 0) {
                 onNextBatch(res.questions);
             } else {

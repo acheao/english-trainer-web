@@ -2,25 +2,42 @@ import { useState } from "react";
 import { practiceApi } from "./practiceApi";
 import type { QuestionDTO } from "../../types";
 import { useSnackbar } from "../../shared/ui/SnackbarProvider";
+import type { GeneratorMode, StartSessionRequest } from "./practiceApi";
 
 interface StartSessionPanelProps {
-    onSessionStarted: (sessionId: string, questions: QuestionDTO[]) => void;
+    onSessionStarted: (sessionId: string, questions: QuestionDTO[], config: StartSessionRequest) => void;
 }
 
 export default function StartSessionPanel({ onSessionStarted }: StartSessionPanelProps) {
     const { showSnackbar } = useSnackbar();
     const [batchSize, setBatchSize] = useState(10);
-    const [generatorMode, setGeneratorMode] = useState<"hybrid" | "llm" | "db_only">("hybrid");
+    const [generatorMode, setGeneratorMode] = useState<GeneratorMode>("smart");
     const [loading, setLoading] = useState(false);
+
+    const modeTips: Record<GeneratorMode, string> = {
+        new: "New: generate questions from materials that have never been used.",
+        wrong: "Wrong: regenerate similar questions based on your past mistakes.",
+        review: "Review: directly reuse previously incorrect questions.",
+        smart: "Smart: automatically mix new, wrong, and review questions.",
+    };
 
     const handleStart = async () => {
         setLoading(true);
         try {
-            const res = await practiceApi.startSession({ batchSize, generatorMode });
-            if (res.questions && res.questions.length > 0) {
-                onSessionStarted(res.sessionId, res.questions);
+            const request: StartSessionRequest = { batchSize, generatorMode };
+            const res = await practiceApi.startSession(request);
+            let questions = res.questions ?? [];
+
+            // Some backends create session first and may return empty questions initially.
+            if (questions.length === 0 && res.sessionId) {
+                const nextBatch = await practiceApi.nextBatch(res.sessionId, request);
+                questions = nextBatch.questions ?? [];
+            }
+
+            if (questions.length > 0) {
+                onSessionStarted(res.sessionId, questions, request);
             } else {
-                showSnackbar("No questions generated. Check your materials.", "warning");
+                showSnackbar("No questions available in this mode. Try New/Wrong/Review/Smart or import more materials.", "warning");
             }
         } catch (err: any) {
             showSnackbar(err.message || "Failed to start session", "error");
@@ -57,13 +74,15 @@ export default function StartSessionPanel({ onSessionStarted }: StartSessionPane
                         </label>
                         <select
                             value={generatorMode}
-                            onChange={(e) => setGeneratorMode(e.target.value as any)}
+                            onChange={(e) => setGeneratorMode(e.target.value as GeneratorMode)}
                             className="block w-full rounded-md border-0 py-2.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                         >
-                            <option value="hybrid">Hybrid (DB + LLM)</option>
-                            <option value="llm">LLM Only</option>
-                            <option value="db_only">Database Only</option>
+                            <option value="new">New (Unseen Materials)</option>
+                            <option value="wrong">Wrong (Regenerate from Mistakes)</option>
+                            <option value="review">Review (Reuse Wrong Questions)</option>
+                            <option value="smart">Smart (Adaptive Mix)</option>
                         </select>
+                        <p className="mt-2 text-sm text-gray-500">{modeTips[generatorMode]}</p>
                     </div>
 
                     <button

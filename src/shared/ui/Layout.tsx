@@ -22,9 +22,9 @@ export default function Layout() {
   const { logout } = useAuth();
 
   return (
-    <div className="flex min-h-screen bg-[#f7f7f8] font-sans text-gray-900">
+    <div className="min-h-screen bg-[#f7f7f8] font-sans text-gray-900">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 flex flex-col pt-8 pb-6 border-r border-gray-200 bg-[#f7f7f8]">
+      <aside className="fixed inset-y-0 left-0 w-64 flex flex-col pt-8 pb-6 border-r border-gray-200 bg-[#f7f7f8]">
         {/* Logo / Header */}
         <div className="px-6 mb-8 flex items-center gap-2 text-gray-400">
           {/* Simple mock window controls */}
@@ -90,9 +90,11 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-white ml-2 my-2 mr-2 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="h-full overflow-y-auto p-10">
-          <Outlet />
+      <main className="ml-64 h-screen p-2 overflow-hidden">
+        <div className="h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="h-full overflow-y-auto p-10">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

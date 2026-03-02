@@ -3,6 +3,23 @@ import { ApiError } from "./errors";
 
 type JsonValue = any;
 
+function buildApiErrorMessage(status: number, statusText: string, bodyText: string): string {
+  try {
+    const parsed = JSON.parse(bodyText) as { message?: unknown };
+    if (typeof parsed.message === "string" && parsed.message.trim()) {
+      return parsed.message.trim();
+    }
+  } catch {
+    // Keep fallback below.
+  }
+
+  if (bodyText.trim()) {
+    return bodyText.trim();
+  }
+
+  return `http ${status} ${statusText}`;
+}
+
 export async function apiFetch<T = JsonValue>(
   path: string,
   options: RequestInit & { json?: unknown } = {}
@@ -32,7 +49,7 @@ export async function apiFetch<T = JsonValue>(
   const text = await resp.text();
 
   if (!resp.ok) {
-    throw new ApiError(resp.status, `http ${resp.status} ${resp.statusText}`, text);
+    throw new ApiError(resp.status, buildApiErrorMessage(resp.status, resp.statusText, text), text);
   }
 
   // 尝试解析 json；否则返回 text

@@ -2,9 +2,45 @@ import type { GradingDTO } from "../../types";
 
 interface GradingPanelProps {
     grading: GradingDTO;
+    streaming?: boolean;
+    scoreTotal?: number;
+    userAnswer?: string;
 }
 
-export default function GradingPanel({ grading }: GradingPanelProps) {
+export default function GradingPanel({
+    grading,
+    streaming = false,
+    scoreTotal = 100,
+    userAnswer,
+}: GradingPanelProps) {
+    if (streaming) {
+        return (
+            <div className="mt-6 rounded-xl border-2 border-blue-300 overflow-hidden shadow-sm">
+                <div className="p-4 md:p-6 bg-blue-50 flex items-center gap-3 border-b border-blue-200">
+                    <svg className="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <h3 className="text-lg font-bold text-blue-700">AI is grading...</h3>
+                </div>
+                <div className="bg-white p-6 md:p-8">
+                    {userAnswer && (
+                        <div className="mb-6">
+                            <h4 className="text-sm font-medium tracking-wide text-gray-500 uppercase mb-3">Your Answer</h4>
+                            <div className="bg-blue-50 rounded-lg p-4 border border-blue-100 text-gray-900">
+                                {userAnswer}
+                            </div>
+                        </div>
+                    )}
+                    <h4 className="text-sm font-medium tracking-wide text-gray-500 uppercase mb-3">Streaming Explanation</h4>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap min-h-[72px]">
+                        {grading.explanationZh || "Preparing feedback..."}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     const isSuccess = grading.isCorrect;
     const borderColor = isSuccess ? "border-green-500" : "border-yellow-500";
     const bgColor = isSuccess ? "bg-green-50" : "bg-yellow-50";
@@ -23,7 +59,7 @@ export default function GradingPanel({ grading }: GradingPanelProps) {
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
                         </svg>
                     )}
-                    <h3 className={`text-xl font-bold ${textColor}`}>Score: {grading.score}/100</h3>
+                    <h3 className={`text-xl font-bold ${textColor}`}>Score: {grading.score}/{scoreTotal}</h3>
                 </div>
             </div>
 
@@ -37,6 +73,15 @@ export default function GradingPanel({ grading }: GradingPanelProps) {
                     </div>
                 ) : (
                     <div className="space-y-8">
+                        {userAnswer && (
+                            <div>
+                                <h4 className="text-sm font-medium tracking-wide text-gray-500 uppercase mb-3">Your Answer</h4>
+                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-100 text-gray-900">
+                                    {userAnswer}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Corrected Answer */}
                         <div>
                             <h4 className="flex items-center text-sm font-medium tracking-wide text-gray-500 uppercase mb-3">

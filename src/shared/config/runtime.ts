@@ -2,10 +2,16 @@ const KEY = "runtime_api_base_url";
 
 export function getApiBaseUrl(): string {
   const saved = localStorage.getItem(KEY)?.trim();
-  if (saved) return trimTrailingSlash(saved);
+  if (saved) {
+    const normalizedSaved = trimTrailingSlash(saved);
+    if (normalizedSaved === "http://localhost:80") {
+      return "http://localhost:8080";
+    }
+    return normalizedSaved;
+  }
 
   const envDefault = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  return trimTrailingSlash(envDefault || "http://localhost:80");
+  return trimTrailingSlash(envDefault || "http://localhost:8080");
 }
 
 export function setApiBaseUrl(url: string) {

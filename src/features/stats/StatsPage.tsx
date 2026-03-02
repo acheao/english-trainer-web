@@ -33,7 +33,7 @@ export default function StatsPage() {
             setLoadingErrors(true);
             try {
                 const res = await statsApi.getErrorTypes(range);
-                setErrorTypes(res.items || []);
+                setErrorTypes(res);
             } catch (err: any) {
                 showSnackbar(err.message || "Failed to load error stats", "error");
             } finally {
@@ -53,40 +53,40 @@ export default function StatsPage() {
             {/* Overview Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Today's Output</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Materials</h3>
                     {loadingOverview ? (
                         <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
                     ) : (
-                        <p className="text-3xl font-bold text-gray-900">{overview?.todayDone || 0}</p>
+                        <p className="text-3xl font-bold text-gray-900">{overview?.totalMaterialsCount || 0}</p>
                     )}
                 </div>
 
                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Today Avg Score</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Practiced Materials</h3>
                     {loadingOverview ? (
                         <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
                     ) : (
-                        <p className="text-3xl font-bold text-blue-600">{overview?.todayAvgScore || 0}</p>
+                        <p className="text-3xl font-bold text-blue-600">{overview?.practicedMaterialsCount || 0}</p>
                     )}
                 </div>
 
                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Today Accuracy</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Practice Coverage</h3>
                     {loadingOverview ? (
                         <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
                     ) : (
                         <p className="text-3xl font-bold text-green-600">
-                            {overview?.todayAccuracy ? `${Math.round(overview.todayAccuracy * 100)}%` : "0%"}
+                            {overview ? `${Math.round((overview.practiceCoverage || 0) * 100)}%` : "0%"}
                         </p>
                     )}
                 </div>
 
                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Due for Review</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Unpracticed Materials</h3>
                     {loadingOverview ? (
                         <div className="h-10 w-10 animate-pulse bg-gray-200 rounded-full"></div>
                     ) : (
-                        <p className="text-3xl font-bold text-orange-500">{overview?.dueCount || 0}</p>
+                        <p className="text-3xl font-bold text-orange-500">{overview?.unpracticedMaterialsCount || 0}</p>
                     )}
                 </div>
             </div>
@@ -131,9 +131,11 @@ export default function StatsPage() {
                                         <p className="text-sm font-semibold text-gray-900 mb-1">
                                             {index + 1}. {err.errorType}
                                         </p>
-                                        <p className="text-xs text-gray-500">
-                                            Last seen: {new Date(err.lastSeenAt).toLocaleString()}
-                                        </p>
+                                        {err.lastSeenAt && (
+                                            <p className="text-xs text-gray-500">
+                                                Last seen: {new Date(err.lastSeenAt).toLocaleString()}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="bg-red-50 text-red-700 font-medium px-3 py-1 rounded-full text-sm flex items-center gap-1.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>

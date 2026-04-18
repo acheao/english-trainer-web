@@ -29,12 +29,14 @@ export default function BatchSummaryDialog({
     // Compute stats
     const totalScore = results.reduce((acc, curr) => acc + curr.score, 0);
     const avgScore = results.length > 0 ? Math.round(totalScore / results.length) : 0;
-    const correctCount = results.filter(r => r.isCorrect).length;
+    const correctCount = results.filter((result) => result.isCorrect).length;
 
-    const errorTypesCount = results.flatMap(r => r.errorTypes || []).reduce((acc, curr) => {
-        acc[curr] = (acc[curr] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+    const errorTypesCount = results
+        .flatMap((result) => result.errorTypes ?? [])
+        .reduce<Record<string, number>>((acc, curr) => {
+            acc[curr] = (acc[curr] || 0) + 1;
+            return acc;
+        }, {});
 
     const topErrorTypes = Object.entries(errorTypesCount)
         .sort((a, b) => b[1] - a[1])
@@ -50,8 +52,9 @@ export default function BatchSummaryDialog({
                 showSnackbar("No more questions available for this session.", "info");
                 onFinish();
             }
-        } catch (err: any) {
-            showSnackbar(err.message || "Failed to fetch next batch", "error");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Failed to fetch next batch";
+            showSnackbar(message, "error");
         } finally {
             setLoading(false);
         }

@@ -1,36 +1,44 @@
 import { useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { authApi } from "./authApi";
 import { useAuth } from "./useAuth";
 import { useNotice } from "../../shared/ui/useNotice";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { pushNotice } = useNotice();
   const { isAuthenticated, isLoading, login } = useAuth();
 
   const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   if (!isLoading && isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
-  const destination = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/";
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (password !== confirmPassword) {
+      pushNotice("两次密码不一致 / Passwords do not match", "warning");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const response = await authApi.login({ email: email.trim(), password });
+      const response = await authApi.register({
+        email: email.trim(),
+        password,
+        displayName: displayName.trim() || undefined,
+      });
       login(response);
-      pushNotice("登录成功 / Signed in successfully", "success");
-      navigate(destination, { replace: true });
+      pushNotice("注册成功，开始初始化你的学习空间 / Account created", "success");
+      navigate("/settings?onboarding=1", { replace: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed";
-      pushNotice(`登录失败 / ${message}`, "error");
+      const message = error instanceof Error ? error.message : "Register failed";
+      pushNotice(`注册失败 / ${message}`, "error");
     } finally {
       setSubmitting(false);
     }
@@ -41,24 +49,24 @@ export default function LoginPage() {
       <div className="app-auth-panel">
         <div className="space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
-            English Trainer v2
+            Personalized Practice
           </div>
           <h1 className="max-w-lg text-4xl font-bold leading-tight text-white md:text-5xl">
-            每天 30 分钟，把你的英语输入变成真正会用的表达。
+            建一个只属于你自己的英语材料库，然后让练习围着你的弱点长出来。
           </h1>
           <p className="max-w-xl text-sm leading-7 text-slate-200 md:text-base">
-            Import YouTube and article materials, practice against your own library, and let the model remember where
-            you slow down, hesitate, and make mistakes.
+            Register with email, connect your favorite model provider, and turn every imported lesson into the next
+            best 30-minute session.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="app-auth-card">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--brand-ink-soft)]">
-              Welcome Back
+              Create Account
             </p>
-            <h2 className="text-2xl font-bold text-[var(--brand-ink)]">登录 / Sign In</h2>
-            <p className="text-sm text-slate-600">使用邮箱登录，继续今天的学习计划。</p>
+            <h2 className="text-2xl font-bold text-[var(--brand-ink)]">注册 / Sign Up</h2>
+            <p className="text-sm text-slate-600">先创建账号，随后进入 onboarding 配置学习目标和模型。</p>
           </div>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
@@ -74,6 +82,17 @@ export default function LoginPage() {
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
+            <span>昵称 / Display Name</span>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              className="app-input"
+              placeholder="可选"
+            />
+          </label>
+
+          <label className="space-y-2 text-sm font-medium text-slate-700">
             <span>密码 / Password</span>
             <input
               type="password"
@@ -85,12 +104,24 @@ export default function LoginPage() {
             />
           </label>
 
+          <label className="space-y-2 text-sm font-medium text-slate-700">
+            <span>确认密码 / Confirm Password</span>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              className="app-input"
+              placeholder="再次输入密码"
+              required
+            />
+          </label>
+
           <button type="submit" disabled={submitting} className="app-button-primary">
-            {submitting ? "登录中 / Signing in..." : "登录 / Sign In"}
+            {submitting ? "创建中 / Creating..." : "注册并开始 / Create Account"}
           </button>
 
           <p className="text-sm text-slate-600">
-            还没有账号？ <Link to="/register" className="font-semibold text-[var(--brand-red)]">注册 / Create one</Link>
+            已经有账号？ <Link to="/login" className="font-semibold text-[var(--brand-red)]">登录 / Sign in</Link>
           </p>
         </form>
       </div>

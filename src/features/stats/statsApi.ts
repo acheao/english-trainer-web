@@ -1,17 +1,18 @@
 import { apiFetch } from "../../shared/api/client";
+import type {
+    DayProgress,
+    ErrorTypeStat as SharedErrorTypeStat,
+    StatsOverview as SharedStatsOverview,
+} from "../../types";
 
-export interface StatsOverview {
+export interface StatsOverview extends SharedStatsOverview {
     totalMaterialsCount: number;
     practicedMaterialsCount: number;
     practiceCoverage: number;
     unpracticedMaterialsCount: number;
 }
 
-export interface ErrorTypeStat {
-    errorType: string;
-    count: number;
-    lastSeenAt?: string;
-}
+export type ErrorTypeStat = SharedErrorTypeStat;
 
 type RecordValue = Record<string, unknown>;
 
@@ -27,6 +28,10 @@ function toString(value: unknown): string | undefined {
     return typeof value === "string" ? value : undefined;
 }
 
+function toBoolean(value: unknown): boolean | undefined {
+    return typeof value === "boolean" ? value : undefined;
+}
+
 function unwrapData(raw: unknown): unknown {
     if (isRecord(raw) && raw.data !== undefined && raw.data !== null) {
         return raw.data;
@@ -34,28 +39,57 @@ function unwrapData(raw: unknown): unknown {
     return raw;
 }
 
+function normalizeDayProgress(raw: unknown): DayProgress | null {
+    if (!isRecord(raw)) return null;
+
+    const date = toString(raw.date);
+    const minutes = toNumber(raw.minutes) ?? 0;
+    const avgScore = toNumber(raw.avgScore) ?? 0;
+    const answers = toNumber(raw.answers) ?? 0;
+
+    if (!date) return null;
+
+    return {
+        date,
+        minutes,
+        avgScore,
+        answers,
+    };
+}
+
 function normalizeOverview(raw: unknown): StatsOverview {
     const payload = unwrapData(raw);
     const record = isRecord(payload) ? payload : {};
 
-    // Primary shape from current backend:
-    // { totalMaterialsCount: number, practicedMaterialsCount: number }
-    const total = toNumber(record.totalMaterialsCount) ?? 0;
-    const practiced = toNumber(record.practicedMaterialsCount) ?? 0;
-
-    // Backward-compatible fallback for older shape if backend changes later.
-    const fallbackPracticed = toNumber(record.todayDone) ?? practiced;
-    const fallbackCoverage = toNumber(record.todayAccuracy);
-    const resolvedPracticed = practiced || fallbackPracticed;
-    const resolvedTotal = total || Math.max(resolvedPracticed, 0);
-    const coverage = fallbackCoverage ?? (resolvedTotal > 0 ? resolvedPracticed / resolvedTotal : 0);
-    const unpracticed = Math.max(resolvedTotal - resolvedPracticed, 0);
+    const totalMaterialsCount = toNumber(record.totalMaterialsCount) ?? toNumber(record.activeLessons) ?? 0;
+    const practicedMaterialsCount = toNumber(record.practicedMaterialsCount) ?? toNumber(record.sessionsCompleted) ?? 0;
+    const practiceCoverage =
+        toNumber(record.practiceCoverage)
+        ?? toNumber(record.todayAccuracy)
+        ?? (totalMaterialsCount > 0 ? practicedMaterialsCount / totalMaterialsCount : 0);
+    const last7Days = Array.isArray(record.last7Days)
+        ? record.last7Days
+            .map((item) => normalizeDayProgress(item))
+            .filter((item): item is DayProgress => item !== null)
+        : [];
 
     return {
-        totalMaterialsCount: resolvedTotal,
-        practicedMaterialsCount: resolvedPracticed,
-        practiceCoverage: coverage,
-        unpracticedMaterialsCount: unpracticed,
+        dailyGoalMinutes: toNumber(record.dailyGoalMinutes) ?? 30,
+        streakDays: toNumber(record.streakDays) ?? 0,
+        studyUnits: toNumber(record.studyUnits) ?? 0,
+        masteredUnits: toNumber(record.masteredUnits) ?? 0,
+        pendingReviewUnits: toNumber(record.pendingReviewUnits) ?? 0,
+        activeLessons: toNumber(record.activeLessons) ?? totalMaterialsCount,
+        sessionsCompleted: toNumber(record.sessionsCompleted) ?? practicedMaterialsCount,
+        recentAverageScore: toNumber(record.recentAverageScore) ?? toNumber(record.todayAvgScore) ?? 0,
+        practiceMinutesLast30Days: toNumber(record.practiceMinutesLast30Days) ?? 0,
+        practiceMinutesLast7Days: toNumber(record.practiceMinutesLast7Days) ?? 0,
+        hasLlmConfig: toBoolean(record.hasLlmConfig) ?? false,
+        last7Days,
+        totalMaterialsCount,
+        practicedMaterialsCount,
+        practiceCoverage,
+        unpracticedMaterialsCount: Math.max(totalMaterialsCount - practicedMaterialsCount, 0),
     };
 }
 

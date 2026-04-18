@@ -1,4 +1,19 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap");
 @import "tailwindcss";
+
+:root {
+  --canvas: #f5efe3;
+  --canvas-strong: #efe3cf;
+  --surface: rgba(255, 252, 246, 0.92);
+  --surface-strong: #fffdf7;
+  --brand-red: #c4512d;
+  --brand-red-deep: #7c2a14;
+  --brand-gold: #d6b06d;
+  --brand-ink: #1d242f;
+  --brand-ink-soft: #50616f;
+  --line: rgba(29, 36, 47, 0.1);
+  --shadow: 0 24px 70px rgba(82, 47, 17, 0.12);
+}
 
 html,
 body,
@@ -10,11 +25,117 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: #f7f7f8;
-  color: #1a1a1a;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--brand-ink);
+  background:
+    radial-gradient(circle at top left, rgba(212, 176, 109, 0.35), transparent 26%),
+    radial-gradient(circle at top right, rgba(196, 81, 45, 0.12), transparent 22%),
+    linear-gradient(180deg, #f8f2e8 0%, #f6ecde 42%, #f4ede3 100%);
 }
 
 #root {
   min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app-auth-shell {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.app-auth-panel {
+  display: grid;
+  gap: 1.5rem;
+  min-height: calc(100vh - 3rem);
+  padding: 1.5rem;
+  border-radius: 2rem;
+  background:
+    linear-gradient(135deg, rgba(124, 42, 20, 0.92), rgba(39, 28, 52, 0.88)),
+    radial-gradient(circle at top right, rgba(214, 176, 109, 0.28), transparent 34%);
+  box-shadow: var(--shadow);
+}
+
+.app-auth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-self: center;
+  justify-self: end;
+  width: min(100%, 30rem);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 1.75rem;
+  background: rgba(255, 249, 241, 0.95);
+  box-shadow: 0 16px 48px rgba(16, 24, 40, 0.18);
+}
+
+.app-input,
+.app-textarea,
+.app-select {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(80, 97, 111, 0.2);
+  border-radius: 1rem;
+  background: white;
+  color: var(--brand-ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-input:focus,
+.app-textarea:focus,
+.app-select:focus {
+  outline: none;
+  border-color: rgba(196, 81, 45, 0.55);
+  box-shadow: 0 0 0 4px rgba(196, 81, 45, 0.12);
+}
+
+.app-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.95rem 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand-red), #9f391d);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.app-button-primary:hover {
+  transform: translateY(-1px);
+}
+
+.app-button-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (min-width: 960px) {
+  .app-auth-panel {
+    grid-template-columns: minmax(0, 1.2fr) minmax(22rem, 30rem);
+    align-items: center;
+    padding: 3rem;
+  }
 }

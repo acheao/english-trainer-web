@@ -1,16 +1,19 @@
 import { apiFetch } from "../../shared/api/client";
 import { ApiError } from "../../shared/api/errors";
 import { getApiBaseUrl } from "../../shared/config/runtime";
-import type { GradingDTO, QuestionDTO } from "../../types";
+import type { GradingDTO, QuestionDTO, TodayPlan } from "../../types";
 
 export type GeneratorMode = "new" | "wrong" | "review" | "smart";
+export type SessionMode = "DAILY" | "EXTRA";
 
 export interface StartSessionRequest {
-    batchSize: number;
-    generatorMode: GeneratorMode;
+    batchSize?: number;
+    generatorMode?: GeneratorMode;
+    mode?: SessionMode;
 }
 
 export interface StartSessionResponse {
+    id: string;
     sessionId: string;
     questions: QuestionDTO[];
 }
@@ -148,7 +151,7 @@ function normalizeSessionResponse(raw: unknown, requireSessionId = true): StartS
         ? unwrapApiData<RecordValue>(raw)
         : {};
     const session = isRecord(payload.session) ? payload.session : {};
-    const sessionId = getString(payload.sessionId) ?? getString(session.id) ?? "";
+    const sessionId = getString(payload.sessionId) ?? getString(payload.id) ?? getString(session.id) ?? "";
 
     const rawQuestions = Array.isArray(payload.questions)
         ? payload.questions
@@ -165,8 +168,22 @@ function normalizeSessionResponse(raw: unknown, requireSessionId = true): StartS
     }
 
     return {
+        id: resolvedSessionId ?? "",
         sessionId: resolvedSessionId ?? "",
         questions: normalizedQuestions,
+    };
+}
+
+function buildDefaultTodayPlan(): TodayPlan {
+    return {
+        id: "today-plan",
+        planDate: new Date().toISOString().slice(0, 10),
+        estimatedMinutes: 30,
+        majorFocus: "Daily practice",
+        focusSummary: "Start a session to generate a fresh practice set from your current lessons.",
+        status: "READY",
+        selectedUnitCount: 0,
+        bucketCounts: {},
     };
 }
 
@@ -294,6 +311,10 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 export const practiceApi = {
+    getTodayPlan: async (): Promise<TodayPlan> => {
+        return buildDefaultTodayPlan();
+    },
+
     startSession: async (data: StartSessionRequest): Promise<StartSessionResponse> => {
         const raw = await apiFetch<unknown>("api/sessions", {
             method: "POST",

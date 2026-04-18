@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import StartSessionPanel from "./StartSessionPanel";
 import QuestionCard from "./QuestionCard";
 import AnswerEditor from "./AnswerEditor";
@@ -9,9 +10,12 @@ import { practiceApi } from "./practiceApi";
 import type { QuestionDTO, GradingDTO } from "../../types";
 import type { StartSessionRequest } from "./practiceApi";
 
+const DEFAULT_BATCH_SIZE = 10;
+const DEFAULT_GENERATOR_MODE: NonNullable<StartSessionRequest["generatorMode"]> = "smart";
+
 const DEFAULT_SESSION_CONFIG: StartSessionRequest = {
-    batchSize: 10,
-    generatorMode: "smart",
+    batchSize: DEFAULT_BATCH_SIZE,
+    generatorMode: DEFAULT_GENERATOR_MODE,
 };
 
 function buildStreamingGrading(explanationZh: string): GradingDTO {
@@ -27,6 +31,7 @@ function buildStreamingGrading(explanationZh: string): GradingDTO {
 
 export default function PracticePage() {
     const { showSnackbar } = useSnackbar();
+    const { sessionId: routeSessionId } = useParams<{ sessionId: string }>();
 
     // State Machine
     const [sessionId, setSessionId] = useState<string | null>(null);
@@ -42,6 +47,7 @@ export default function PracticePage() {
 
     // Dialog State
     const [showSummary, setShowSummary] = useState(false);
+    const [loadingSession, setLoadingSession] = useState(false);
 
     const currentQuestion = questions[currentIndex];
 
@@ -55,6 +61,43 @@ export default function PracticePage() {
         setCurrentUserAnswer(null);
         setShowSummary(false);
     };
+
+    useEffect(() => {
+        if (!routeSessionId || routeSessionId === sessionId || questions.length > 0) {
+            return;
+        }
+
+        let cancelled = false;
+
+        void (async () => {
+            setLoadingSession(true);
+            try {
+                const res = await practiceApi.nextBatch(routeSessionId, DEFAULT_SESSION_CONFIG);
+                if (cancelled) return;
+
+                if (res.questions.length === 0) {
+                    setSessionId(routeSessionId);
+                    showSnackbar("No questions are available for this session yet.", "warning");
+                    return;
+                }
+
+                handleSessionStarted(routeSessionId, res.questions, DEFAULT_SESSION_CONFIG);
+            } catch (error) {
+                if (!cancelled) {
+                    const message = error instanceof Error ? error.message : "Failed to load practice session";
+                    showSnackbar(message, "error");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingSession(false);
+                }
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [questions.length, routeSessionId, sessionId, showSnackbar]);
 
     const handleSubmitAnswer = async (answer: string) => {
         if (!currentQuestion) return;
@@ -124,6 +167,17 @@ export default function PracticePage() {
         setCurrentUserAnswer(null);
         setShowSummary(false);
     };
+
+    if (loadingSession) {
+        return (
+            <div className="max-w-4xl mx-auto py-8">
+                <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+                    <h1 className="text-2xl font-bold text-gray-900">Loading Practice Session</h1>
+                    <p className="mt-3 text-sm text-gray-500">Fetching the next batch for this session...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!sessionId || questions.length === 0) {
         return (
@@ -218,8 +272,8 @@ export default function PracticePage() {
                 open={showSummary}
                 sessionId={sessionId}
                 results={batchResults}
-                batchSize={sessionConfig.batchSize}
-                generatorMode={sessionConfig.generatorMode}
+                batchSize={sessionConfig.batchSize ?? DEFAULT_BATCH_SIZE}
+                generatorMode={sessionConfig.generatorMode ?? DEFAULT_GENERATOR_MODE}
                 onNextBatch={handleNextBatch}
                 onFinish={handleFinishSession}
             />

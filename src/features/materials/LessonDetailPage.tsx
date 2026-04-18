@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PlayCircleRounded, SyncRounded } from "@mui/icons-material";
 import { libraryApi } from "./libraryApi";
@@ -26,7 +26,10 @@ export default function LessonDetailPage() {
   const [savingUnits, setSavingUnits] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (!lessonId) return undefined;
+    if (!lessonId) {
+      return undefined;
+    }
+
     const currentLessonId = lessonId;
     let cancelled = false;
 
@@ -40,13 +43,14 @@ export default function LessonDetailPage() {
       } catch (error) {
         if (!cancelled) {
           const message = error instanceof Error ? error.message : "Failed to load lesson";
-          pushNotice(`加载失败 / ${message}`, "error");
+          pushNotice(`加载 lesson 失败：${message}`, "error");
           setLoading(false);
         }
       }
     }
 
     void loadDetail();
+
     const interval = window.setInterval(() => {
       void loadDetail();
     }, 4500);
@@ -60,7 +64,7 @@ export default function LessonDetailPage() {
   useEffect(() => {
     const mediaUrl = lesson?.mediaUrl;
 
-    if (!mediaUrl || lesson.status !== "READY") {
+    if (!mediaUrl || lesson?.status !== "READY") {
       setAudioSrc((current) => {
         if (current) {
           URL.revokeObjectURL(current);
@@ -72,20 +76,25 @@ export default function LessonDetailPage() {
 
     let cancelled = false;
     let objectUrl: string | null = null;
+    const currentMediaUrl = mediaUrl;
 
-    void (async () => {
+    async function loadAudio() {
       try {
-        const blob = await libraryApi.fetchLessonMedia(mediaUrl);
-        if (cancelled) return;
+        const blob = await libraryApi.fetchLessonMedia(currentMediaUrl);
+        if (cancelled) {
+          return;
+        }
         objectUrl = URL.createObjectURL(blob);
         setAudioSrc(objectUrl);
       } catch (error) {
         if (!cancelled) {
           const message = error instanceof Error ? error.message : "Failed to load audio";
-          pushNotice(`音频加载失败 / ${message}`, "warning");
+          pushNotice(`音频加载失败：${message}`, "warning");
         }
       }
-    })();
+    }
+
+    void loadAudio();
 
     return () => {
       cancelled = true;
@@ -94,11 +103,6 @@ export default function LessonDetailPage() {
       }
     };
   }, [lesson?.mediaUrl, lesson?.status, pushNotice]);
-
-  const progressLabel = useMemo(() => {
-    if (!lesson) return "";
-    return `${lesson.studyUnits.length} study units`;
-  }, [lesson]);
 
   async function handleUnitUpdate(unit: StudyUnit, patch: Partial<StudyUnit>) {
     setSavingUnits((current) => ({ ...current, [unit.id]: true }));
@@ -117,10 +121,10 @@ export default function LessonDetailPage() {
             }
           : current
       );
-      pushNotice("已更新学习单元 / Study unit updated", "success");
+      pushNotice("study unit 已更新。", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update study unit";
-      pushNotice(`更新失败 / ${message}`, "error");
+      pushNotice(`更新失败：${message}`, "error");
     } finally {
       setSavingUnits((current) => ({ ...current, [unit.id]: false }));
     }
@@ -129,10 +133,8 @@ export default function LessonDetailPage() {
   if (loading) {
     return (
       <div className="rounded-[2rem] border border-[var(--line)] bg-white/85 p-10 shadow-[var(--shadow)]">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--brand-ink-soft)]">
-          Loading Lesson
-        </p>
-        <h1 className="mt-4 text-3xl font-bold text-[var(--brand-ink)]">正在加载资料详情...</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--brand-ink-soft)]">Lesson</p>
+        <h1 className="mt-4 text-3xl font-bold text-[var(--brand-ink)]">正在加载材料详情...</h1>
       </div>
     );
   }
@@ -140,9 +142,9 @@ export default function LessonDetailPage() {
   if (!lesson) {
     return (
       <div className="rounded-[2rem] border border-[var(--line)] bg-white/85 p-10 shadow-[var(--shadow)]">
-        <h1 className="text-3xl font-bold text-[var(--brand-ink)]">未找到该材料 / Lesson not found</h1>
+        <h1 className="text-3xl font-bold text-[var(--brand-ink)]">没有找到这份材料</h1>
         <Link to="/library" className="mt-4 inline-flex text-sm font-semibold text-[var(--brand-red)]">
-          返回资料库 / Back to library
+          返回材料库
         </Link>
       </div>
     );
@@ -154,7 +156,7 @@ export default function LessonDetailPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Link to="/library" className="text-sm font-semibold text-[var(--brand-red)]">
-              ← 返回资料库 / Back to Library
+              返回材料库
             </Link>
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-full border border-[var(--line)] bg-[var(--canvas)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--brand-ink-soft)]">
@@ -176,8 +178,8 @@ export default function LessonDetailPage() {
               <p className="mt-2 break-all text-[var(--brand-ink)]">{lesson.sourceUrl ?? "Manual import"}</p>
             </div>
             <div className="rounded-2xl bg-[var(--canvas)] px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--brand-ink-soft)]">Plan Size</p>
-              <p className="mt-2 text-[var(--brand-ink)]">{progressLabel}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--brand-ink-soft)]">Study Units</p>
+              <p className="mt-2 text-[var(--brand-ink)]">{lesson.studyUnits.length} 个</p>
             </div>
           </div>
         </div>
@@ -185,7 +187,7 @@ export default function LessonDetailPage() {
         {lesson.status === "PROCESSING" ? (
           <div className="mt-6 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
             <SyncRounded className="animate-spin" fontSize="small" />
-            正在后台抓取英文字幕和音频，页面会自动刷新。 / We are fetching subtitles and audio in the background.
+            YouTube 的字幕和音频仍在后台处理中，页面会自动刷新。
           </div>
         ) : null}
 
@@ -193,7 +195,7 @@ export default function LessonDetailPage() {
           <div className="mt-6 rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface-strong)] p-5">
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--brand-ink)]">
               <PlayCircleRounded fontSize="small" />
-              Audio / 音频
+              Lesson Audio
             </div>
             <audio src={audioSrc} controls className="w-full" preload="metadata" />
           </div>
@@ -204,15 +206,15 @@ export default function LessonDetailPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--brand-ink-soft)]">Study Units</p>
-            <h2 className="mt-2 text-2xl font-bold text-[var(--brand-ink)]">字幕与分句 / Transcript Units</h2>
+            <h2 className="mt-2 text-2xl font-bold text-[var(--brand-ink)]">进入练习池的最小单元</h2>
           </div>
           <p className="text-sm text-slate-500">{lesson.studyUnits.length} items</p>
         </div>
 
         <div className="mt-6 space-y-4">
           {lesson.studyUnits.length === 0 ? (
-            <div className="rounded-[1.5rem] border border-dashed border-[var(--line)] bg-[var(--canvas)] px-5 py-8 text-sm text-slate-600">
-              当前还没有可用分句。导入完成后会自动出现在这里。 / Study units will appear here after import finishes.
+            <div className="rounded-[1.5rem] border border-dashed border-[var(--line)] bg-[var(--canvas)] px-5 py-8 text-sm leading-6 text-slate-600">
+              当前还没有可用的 study units。导入完成后它们会自动出现在这里。
             </div>
           ) : (
             lesson.studyUnits.map((unit) => (
@@ -239,41 +241,41 @@ export default function LessonDetailPage() {
                     <button
                       type="button"
                       disabled={Boolean(savingUnits[unit.id])}
-                      onClick={() => handleUnitUpdate(unit, { favorite: !unit.favorite })}
+                      onClick={() => void handleUnitUpdate(unit, { favorite: !unit.favorite })}
                       className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold ${
                         unit.favorite ? "bg-rose-100 text-rose-800" : "bg-[var(--canvas)] text-[var(--brand-ink)]"
                       }`}
                     >
-                      Favorite / 收藏
+                      {unit.favorite ? "已收藏" : "加入收藏"}
                     </button>
                     <button
                       type="button"
                       disabled={Boolean(savingUnits[unit.id])}
-                      onClick={() => handleUnitUpdate(unit, { inPracticePool: !unit.inPracticePool })}
+                      onClick={() => void handleUnitUpdate(unit, { inPracticePool: !unit.inPracticePool })}
                       className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold ${
                         unit.inPracticePool
                           ? "bg-emerald-100 text-emerald-800"
                           : "bg-[var(--canvas)] text-[var(--brand-ink)]"
                       }`}
                     >
-                      Practice Pool / 练习池
+                      {unit.inPracticePool ? "已在练习池" : "加入练习池"}
                     </button>
                     <button
                       type="button"
                       disabled={Boolean(savingUnits[unit.id])}
-                      onClick={() => handleUnitUpdate(unit, { ignored: !unit.ignored })}
+                      onClick={() => void handleUnitUpdate(unit, { ignored: !unit.ignored })}
                       className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold ${
                         unit.ignored ? "bg-slate-200 text-slate-700" : "bg-[var(--canvas)] text-[var(--brand-ink)]"
                       }`}
                     >
-                      Ignore / 忽略
+                      {unit.ignored ? "已忽略" : "忽略此项"}
                     </button>
                     <label className="rounded-2xl bg-[var(--canvas)] px-4 py-3 text-sm font-semibold text-[var(--brand-ink)]">
-                      <span className="mb-2 block">Difficulty / 难度</span>
+                      <span className="mb-2 block">难度</span>
                       <select
                         value={unit.difficulty}
                         disabled={Boolean(savingUnits[unit.id])}
-                        onChange={(event) => handleUnitUpdate(unit, { difficulty: Number(event.target.value) })}
+                        onChange={(event) => void handleUnitUpdate(unit, { difficulty: Number(event.target.value) })}
                         className="app-select bg-white"
                       >
                         <option value={1}>1 - Easy</option>

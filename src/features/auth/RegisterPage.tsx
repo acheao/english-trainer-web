@@ -22,7 +22,7 @@ export default function RegisterPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (password !== confirmPassword) {
-      pushNotice("两次密码不一致 / Passwords do not match", "warning");
+      pushNotice("两次输入的密码不一致。", "warning");
       return;
     }
 
@@ -34,11 +34,11 @@ export default function RegisterPage() {
         displayName: displayName.trim() || undefined,
       });
       login(response);
-      pushNotice("注册成功，开始初始化你的学习空间 / Account created", "success");
+      pushNotice("注册成功，先完成初始化配置。", "success");
       navigate("/settings?onboarding=1", { replace: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Register failed";
-      pushNotice(`注册失败 / ${message}`, "error");
+      pushNotice(`注册失败：${message}`, "error");
     } finally {
       setSubmitting(false);
     }
@@ -52,25 +52,22 @@ export default function RegisterPage() {
             Personalized Practice
           </div>
           <h1 className="max-w-lg text-4xl font-bold leading-tight text-white md:text-5xl">
-            建一个只属于你自己的英语材料库，然后让练习围着你的弱点长出来。
+            建立一套只属于你的英语材料库，然后让系统每天替你选最该练的内容。
           </h1>
           <p className="max-w-xl text-sm leading-7 text-slate-200 md:text-base">
-            Register with email, connect your favorite model provider, and turn every imported lesson into the next
-            best 30-minute session.
+            注册后你可以连接常见大模型 API，导入 YouTube、文章和文本材料，再把它们变成持续进化的日常训练。
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="app-auth-card">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--brand-ink-soft)]">
-              Create Account
-            </p>
-            <h2 className="text-2xl font-bold text-[var(--brand-ink)]">注册 / Sign Up</h2>
-            <p className="text-sm text-slate-600">先创建账号，随后进入 onboarding 配置学习目标和模型。</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--brand-ink-soft)]">Create Account</p>
+            <h2 className="text-2xl font-bold text-[var(--brand-ink)]">注册</h2>
+            <p className="text-sm text-slate-600">创建账号后，下一步会引导你配置模型和学习目标。</p>
           </div>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
-            <span>邮箱 / Email</span>
+            <span>邮箱</span>
             <input
               type="email"
               value={email}
@@ -82,18 +79,18 @@ export default function RegisterPage() {
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
-            <span>昵称 / Display Name</span>
+            <span>显示名称</span>
             <input
               type="text"
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
               className="app-input"
-              placeholder="可选"
+              placeholder="例如 Lin"
             />
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
-            <span>密码 / Password</span>
+            <span>密码</span>
             <input
               type="password"
               value={password}
@@ -105,7 +102,7 @@ export default function RegisterPage() {
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
-            <span>确认密码 / Confirm Password</span>
+            <span>确认密码</span>
             <input
               type="password"
               value={confirmPassword}
@@ -117,11 +114,14 @@ export default function RegisterPage() {
           </label>
 
           <button type="submit" disabled={submitting} className="app-button-primary">
-            {submitting ? "创建中 / Creating..." : "注册并开始 / Create Account"}
+            {submitting ? "创建中..." : "注册并开始"}
           </button>
 
           <p className="text-sm text-slate-600">
-            已经有账号？ <Link to="/login" className="font-semibold text-[var(--brand-red)]">登录 / Sign in</Link>
+            已经有账号？{" "}
+            <Link to="/login" className="font-semibold text-[var(--brand-red)]">
+              去登录
+            </Link>
           </p>
         </form>
       </div>

@@ -1,12 +1,14 @@
 # English Trainer Web
 
+Chinese version: [README.zh-CN.md](README.zh-CN.md)
+
 `english-trainer-web` is the frontend for the English Trainer product. It turns the full learning loop into a usable interface:
 
 `sign up / sign in -> connect model APIs -> import materials -> start a 30-minute daily session -> review feedback -> track progress`
 
 The backend repository lives at `C:\Users\Lin Chao\Documents\work\language-agent`.
 
-## Product Direction
+## Overview
 
 This project is no longer positioned as a single-shot correction tool. It is a learner workspace built around user-owned materials and adaptive practice.
 
@@ -19,7 +21,7 @@ The intended product flow is:
 5. Every day the system builds a focused practice pack of about 30 minutes.
 6. After each answer, the system records score, error types, duration, hesitation, and skip behavior to improve the next session.
 
-## Frontend Information Architecture
+## Product Areas
 
 ### Auth
 
@@ -59,6 +61,14 @@ The intended product flow is:
 - Backend base URL override
 - LLM provider configuration and testing
 
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite
+- Material UI
+- React Router
+
 ## Code Structure
 
 ```text
@@ -77,7 +87,7 @@ src/
   types/
 ```
 
-## Frontend Responsibilities
+## Responsibilities
 
 The frontend is responsible for:
 
@@ -90,7 +100,7 @@ The backend is responsible for:
 
 - authentication
 - material ingestion and persistence
-- YouTube subtitle/audio processing
+- YouTube subtitle and audio processing
 - article text extraction
 - daily plan calculation
 - adaptive task generation
@@ -103,7 +113,7 @@ The backend is responsible for:
 - Node.js 20+
 - npm
 
-### Start
+### Install and start
 
 ```bash
 npm install
@@ -114,6 +124,14 @@ Default dev URL:
 
 ```text
 http://localhost:5173
+```
+
+### Useful scripts
+
+```bash
+npm run build
+npm run lint
+npm run preview
 ```
 
 ### Backend API URL
@@ -128,13 +146,13 @@ VITE_API_BASE_URL=http://127.0.0.1:8080
 
 ## Docker Deployment
 
-This repository already includes:
+This repository includes:
 
 - `Dockerfile`
 - `docker-compose.yml`
 - `nginx/default.conf`
 
-Example:
+Start with:
 
 ```bash
 docker compose up -d --build
@@ -142,7 +160,7 @@ docker compose up -d --build
 
 By default the container exposes the frontend on port `8088`.
 
-## Refactor Focus
+## Current Refactor Focus
 
 The current refactor is centered on:
 

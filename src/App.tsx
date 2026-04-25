@@ -11,30 +11,33 @@ import SettingsPage from "./features/settings/SettingsPage";
 import Layout from "./shared/ui/Layout";
 import NoticeProvider from "./shared/ui/NoticeProvider";
 import LessonDetailPage from "./features/materials/LessonDetailPage";
+import I18nProvider from "./shared/i18n/I18nProvider";
 
 export default function App() {
   return (
-    <NoticeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route element={<AuthGuard />}>
-              <Route element={<Layout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/library" element={<MaterialsPage />} />
-                <Route path="/library/:lessonId" element={<LessonDetailPage />} />
-                <Route path="/practice" element={<PracticePage />} />
-                <Route path="/practice/session/:sessionId" element={<PracticePage />} />
-                <Route path="/stats" element={<StatsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+    <I18nProvider>
+      <NoticeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route element={<AuthGuard />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/library" element={<MaterialsPage />} />
+                  <Route path="/library/:lessonId" element={<LessonDetailPage />} />
+                  <Route path="/practice" element={<PracticePage />} />
+                  <Route path="/practice/session/:sessionId" element={<PracticePage />} />
+                  <Route path="/stats" element={<StatsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Route>
               </Route>
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </NoticeProvider>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </NoticeProvider>
+    </I18nProvider>
   );
 }
